@@ -2,7 +2,7 @@ import os
 from google import genai
 from google.genai import types
 
-def get_files_info(working_directory, directory=None):
+def get_files_info(working_directory, directory="."):
     joined_dir = os.path.abspath(os.path.join(working_directory, directory))
     abs_dir = os.path.abspath(working_directory)
     if not joined_dir.startswith(abs_dir):

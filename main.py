@@ -7,6 +7,9 @@ from functions.get_files_info import schema_get_files_info
 from functions.get_file_content import schema_get_file_content
 from functions.run_python import schema_run_python_file
 from functions.write_file import schema_write_file
+from functions.call_function import call_function, available_functions
+
+ 
 
 def main():
     load_dotenv()
@@ -27,15 +30,6 @@ def main():
         sys.exit(1)
 
     client = genai.Client(api_key=api_key)
-
-    available_functions = types.Tool(
-        function_declarations=[
-            schema_get_files_info,
-            schema_get_file_content,
-            schema_run_python_file,
-            schema_write_file
-        ]
-    )
 
     messages = [
         types.Content(role="user", parts=[types.Part(text=input_text)]),
@@ -71,11 +65,20 @@ def main():
     if response.text:
         print(f"Response: {response.text}")
 
+    function_responses = []
     if response.function_calls:
         for call in response.function_calls:
-            print(f"Calling function: {call.name}({call.args})")
+            function_call_result = call_function(call, verbose)
+            if (
+                not function_call_result.parts
+                or not function_call_result.parts[0].function_response
+            ):
+                raise Exception("empty function call result")
+            if verbose:
+                print(f"-> {function_call_result.parts[0].function_response.response}")
+            function_responses.append(function_call_result.parts[0])
 
-    if not response.text and not response.function_calls:
+    if not response.text and not function_responses:
         print("No response from model.")
 
 
